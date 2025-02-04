@@ -76,7 +76,7 @@ Key_path为SSL证书的保存目录，默认为/etc/letsencrypt/live。
 
 Cert_Id从阿里云-数字证书管理服务控制台-SSL证书管理获取，你原本上传的证书下CertIdentifier开头那8位数字就是：
 
-![image](https://github.com/user-attachments/assets/16ca3c94-be76-463c-8958-e96778d35bbb)
+![image](https://github.com/user-attachments/assets/3f20f4d0-bb03-4fc3-bd6d-30cb9fe655a7)
 
 ~~其实脚本默认有提供一个解析新增+SSL自动生成方案：</br>当没有检测到对应的TXT域名解析，以及到符合要求的SSL证书后，脚本会自动添加一个TXT记录并自动添加SSL证书。</br>虽然这样会有点画蛇添足的意味，但是这些功能并没有删除。~~
 
