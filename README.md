@@ -2,6 +2,8 @@
 
 基于certbot的阿里云函数计算https自动续期脚本。
 
+> [!CAUTION]\
+> 脚本需要在root环境下运行。
 
 # **如何部署**
 
@@ -26,4 +28,21 @@ vim ./.env
 
 ```bash
 poetry run python main.py
+```
+
+### .env文件范例如下：
+
+```bash
+AccessKey_ID=<accesskey_id>
+AccessKey_Secret=<accesskey_secret>
+Endpoint=alidns.cn-hangzhou.aliyuncs.com
+
+Domain=barryblueice.cn
+Record=_acme-challenge
+Record_Value=<record_value>
+
+Key_Path=/etc/letsencrypt/live/example.com
+Cert_Id=00000000
+
+# Endpoint 请参考 https://api.aliyun.com/product/Alidns
 ```
