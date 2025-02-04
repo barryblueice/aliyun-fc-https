@@ -4,6 +4,7 @@
 
 > [!CAUTION]\
 > 脚本仅支持Linux系统。
+> 脚本仅支持Python 3.1x版本。
 
 # **如何部署**
 
@@ -78,4 +79,60 @@ Cert_Id从阿里云-数字证书管理服务控制台-SSL证书管理获取，�
 
 ![image](https://github.com/user-attachments/assets/16ca3c94-be76-463c-8958-e96778d35bbb)
 
-~~其实脚本默认有提供一个解析新增+SSL自动生成方案：</br>当没有检测到对应的TXT域名解析，以及到符合要求的SSL证书后，脚本会自动添加一个TXT记录并自动添加SSL证书。</br>虽然这样会有点画蛇添足的意味，但是这个功能并没有删除。~~
+~~其实脚本默认有提供一个解析新增+SSL自动生成方案：</br>当没有检测到对应的TXT域名解析，以及到符合要求的SSL证书后，脚本会自动添加一个TXT记录并自动添加SSL证书。</br>虽然这样会有点画蛇添足的意味，但是这些功能并没有删除。~~
+
+# **持久化运行**：
+
+可以使用[MCSManager](https://github.com/MCSManager/MCSManager)、[1Panel](https://1panel.cn/)、[宝塔面板](https://www.bt.cn/new/index.html)这类WebUI管理工具进行持久化运行，也可通过nohup、screen等Linux命令行工具设置后台运行。
+
+同时也可设置Linux systemd进行后台持久化运行：
+
+```bash
+vim /etc/systemd/system/aliyun-fc-https.service
+
+# 按下"i"进行编辑，以下内容复制到编辑器中
+
+[Unit]
+Description=Aliyun-FC-HTTPS Daemon
+After=network.target
+
+[Service]
+WorkingDirectory=/path/to/the/project/directory
+ExecStart=/path/to/poetry run python main.py
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s QUIT $MAINPID
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=aliyun-fc-https
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+
+# 输入":wq!"保存，保存重载系统服务后运行：
+
+systemctl daemon-reload
+systemctl enable --now aliyun-fc-https
+
+# 单独运行服务
+
+systemctl start aliyun-fc-https
+
+# 停止服务
+
+systemctl stop aliyun-fc-https
+
+# 重启服务
+
+systemctl restart aliyun-fc-https
+
+# 查看运行情况
+
+systemctl status aliyun-fc-https
+
+# 查看日志
+
+journalctl -u aliyun-fc-https
