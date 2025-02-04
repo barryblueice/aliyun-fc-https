@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "aliyun-fc-https"
+version = "0.1.0"
+description = ""
+authors = ["Barryblueice <barryblueice@outlook.com>"]
+license = "GPLv3"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+cryptography = "^44.0.0"
+python-dotenv = "^1.0.1"
+loguru = "^0.7.3"
+aliyun-python-sdk-ecs = "^4.24.80"
+alibabacloud-alidns20150109 = "^3.5.6"
+ujson = "^5.10.0"
+apscheduler = "^3.11.0"
+certbot = "^3.1.0"
+alibabacloud-cas20200407 = "^2.0.4"
+schedule = "^1.2.2"
+pyfiglet = "^1.0.2"
+
+
+[[tool.poetry.source]]
+name = "mirrors"
+url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/"
+priority = "primary"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

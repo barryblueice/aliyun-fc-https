@@ -1,0 +1,8 @@
+*.pem
+*.csv
+*.bak
+.env
+test.json
+db.json
+test.py
+**/__pycache__
