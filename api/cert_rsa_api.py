@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
+from typing import Union
 from loguru import logger
 
 import sys,os
@@ -43,7 +44,7 @@ def compare_detail(
     online_cert: str,
     online_rsa_key: str,
     local_cert: str,
-    local_rsa_key: str | bytes
+    local_rsa_key: Union[str, bytes]
 ):
     cert_equal = False
     rsa_key_equal = False
