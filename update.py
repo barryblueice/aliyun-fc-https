@@ -49,8 +49,6 @@ def updating_main_process():
             if not access_key_id or not access_key_secret or not endpoint or not domain or not record or not record_value or not key_path or not cert_id:
                 logger.error("Environment file is illegal, please check!")
             else:
-                with open(os.path.join(os.getcwd(),"db.json"),"r",encoding='utf-8') as f:
-                    expiration_date = (json.load(f))["expired-date"]
                 logger.info(f"AccessKey ID: {access_key_id}")
                 logger.info(f"AccessKey Secret: {access_key_secret}")
                 logger.info(f"Endpoint: {endpoint}")
@@ -59,7 +57,6 @@ def updating_main_process():
                 logger.info(f"Record Value: {record_value}")
                 logger.info(f"Key Path: {key_path}")
                 logger.info(f"Cert ID: {cert_id}")
-                logger.info(f"Cert Expired Date: {expiration_date}")
 
                 time.sleep(1)
 
@@ -95,6 +92,10 @@ def updating_main_process():
 
                 certbot.certbot_update(domain=domain)
                 db.update_expire_date(keypath=key_path)
+
+                with open(os.path.join(os.getcwd(),"db.json"),"r",encoding='utf-8') as f:
+                    expiration_date = (json.load(f))["expired-date"]
+                logger.info(f"Cert Expired Date: {expiration_date}")
 
                 time.sleep(1)
 
