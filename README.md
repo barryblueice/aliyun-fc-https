@@ -3,7 +3,7 @@
 基于certbot的阿里云函数计算https自动续期脚本。
 
 > [!CAUTION]\
-> 脚本仅支持Linux系统。</br>脚本仅支持Python 3.1x版本。
+> 脚本仅支持Linux系统。</br>脚本仅支持Python 3.9.2及以上版本。
 
 # **如何部署**
 
