@@ -31,7 +31,7 @@ def get_expired_date():
         sys.exit(0)
 
 def calculate_future_date(expired_date):
-    future_date = expired_date + timedelta(days=89)
+    future_date = expired_date - timedelta(days=1)
     return future_date
 
 def schedule_next_run(future_date):
