@@ -1,15 +1,18 @@
 # **Aliyun FC Https**
 
-基于certbot的阿里云函数计算https自动续期脚本。
+~~基于certbot的阿里云函数计算https自动续期脚本。~~</br>
+基于certbot的阿里云https自动续期脚本，可用于函数计算、异地主机域名SSL等服务。
 
-> [!CAUTION]\
+初衷是为了给部署在阿里云函数计算FC的轻量静态网页添加Let's Encrpypt免费证书，同时做一个脚本更新SSL。
+
+> [!CAUTION]
 > 脚本仅支持Linux系统。</br>脚本仅支持Python 3.9.2及以上版本。
 
 # **如何部署**
 
 1. 根据这两篇教程部署网站+SSL证书：
- - [笔记：如何使用阿里云函数计算部署静态网页](https://www.bilibili.com/opus/1024609365265481753)
- - [笔记：给阿里云函数计算网站添加SSL证书](https://www.bilibili.com/opus/1029687408197632003)
+ - [笔记：如何使用阿里云函数计算部署静态网页（如果只是更新证书可以不看）](https://www.bilibili.com/opus/1024609365265481753)
+ - [笔记：给阿里云函数计算网站添加SSL证书（必看）](https://www.bilibili.com/opus/1029687408197632003)
 
 2. 通过poetry安装依赖：
 
@@ -69,7 +72,7 @@ xxxxxxxxxxxxxxxxxxx # 这里是域名解析的内容（Record_Value）
 
 Key_path为SSL证书的保存目录，默认为/etc/letsencrypt/live。
 
-> [!CAUTION]\
+> [!CAUTION]
 > 如果使用certbot默认的保存目录，则脚本需要在root环境下运行。
 
 ***

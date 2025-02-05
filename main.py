@@ -60,7 +60,6 @@ if __name__ == "__main__":
     logger.info(f'''
 
 {ascii_art}
-
 ''')
     time.sleep(1)
     main()
