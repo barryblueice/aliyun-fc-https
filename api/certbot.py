@@ -14,4 +14,8 @@ def certbot_update(domain: str):
     except:
         pass
 
+    time.sleep(1)
+
     logger.info("Update SSL Complete")
+
+    time.sleep(1)
