@@ -138,3 +138,119 @@ systemctl status aliyun-fc-https
 # 查看日志
 
 journalctl -u aliyun-fc-https
+```
+
+还可以通过init.d设置持久化运行：
+
+```bash
+
+vim /etc/init.d/aliyun-fc-https
+
+# 按下"i"进行编辑，以下内容复制到编辑器中
+
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          aliyun-fc-https
+# Required-Start:    $network
+# Required-Stop:     $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Aliyun FC HTTPS Daemon
+# Description:       Aliyun FC HTTPS Daemon
+
+NAME="aliyun-fc-https"
+PYTHON_BIN="/path/to/poetry"
+WORKDIR="/path/to/the/project/directory"
+SCRIPT="main.py"
+PIDFILE="/var/run/$NAME.pid"
+LOGFILE="/var/log/$NAME.log"
+
+start() {
+    echo "Starting $NAME..."
+    if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+        echo "$NAME is already running."
+        return 1
+    fi
+
+    cd $WORKDIR
+    $PYTHON_BIN run python $SCRIPT >> "$LOGFILE" 2>&1 &
+    echo $! > "$PIDFILE"
+    echo "$NAME started."
+}
+
+stop() {
+    echo "Stopping $NAME..."
+    if [ ! -f "$PIDFILE" ] || ! kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+        echo "$NAME is not running."
+        return 1
+    fi
+
+    kill -QUIT $(cat "$PIDFILE") && rm -f "$PIDFILE"
+    echo "$NAME stopped."
+}
+
+reload() {
+    echo "Reloading $NAME..."
+    if [ ! -f "$PIDFILE" ] || ! kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+        echo "$NAME is not running, cannot reload."
+        return 1
+    fi
+
+    kill -HUP $(cat "$PIDFILE")
+    echo "$NAME reloaded."
+}
+
+status() {
+    if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+        echo "$NAME is running with PID $(cat "$PIDFILE")."
+    else
+        echo "$NAME is not running."
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    reload)
+        reload
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    status)
+        status
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|reload|restart|status}"
+        exit 1
+        ;;
+esac
+
+chmod +x /etc/init.d/aliyun-fc-https
+
+# 输入":wq!"保存，保存重载系统服务后运行：
+
+chmod +x /etc/init.d/aliyun-fc-https
+update-rc.d aliyun-fc-https defaults
+
+# 单独运行服务
+
+service aliyun-fc-https start
+
+# 停止服务
+
+service aliyun-fc-https stop
+
+# 重启服务
+
+service aliyun-fc-https restart
+
+# 查看运行情况
+
+service aliyun-fc-https status
+```
