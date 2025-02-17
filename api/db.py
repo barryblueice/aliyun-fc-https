@@ -25,4 +25,4 @@ def update_expire_date(keypath: str):
             
     except Exception as e:
         logger.error(f"Error: {e}")
-        sys.exit(0)
+        sys.exit(e.errno)
