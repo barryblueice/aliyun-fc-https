@@ -88,7 +88,7 @@ class Aliyun_Domain:
             logger.error(error.message)
             logger.error(error.data.get("Recommend"))
             UtilClient.assert_as_string(error.message)
-            sys.exit(0)
+            sys.exit(error.errno)
 
     @staticmethod
     def new_record(
@@ -120,7 +120,7 @@ class Aliyun_Domain:
             logger.error(error.message)
             logger.error(error.data.get("Recommend"))
             UtilClient.assert_as_string(error.message)
-            sys.exit(0)
+            sys.exit(error.errno)
 
 class Aliyun_SSL:
 
