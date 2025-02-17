@@ -40,7 +40,7 @@ AccessKey_ID=<accesskey_id>
 AccessKey_Secret=<accesskey_secret>
 Endpoint=alidns.cn-hangzhou.aliyuncs.com
 
-Domain=barryblueice.cn
+Domain=example.com
 Record=_acme-challenge
 Record_Value=<record_value>
 
