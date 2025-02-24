@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from api.aliyun import Aliyun_Credential,Aliyun_Domain,Aliyun_SSL
 from api import db,certbot,cert_rsa_api
 import time
+from datetime import datetime
+import pytz
 
 # This python script needs superuser(root) permission to run!
 
@@ -25,7 +27,27 @@ def updating_main_process():
             f.write('\n# Endpoint 请参考 https://api.aliyun.com/product/Alidns\n\n')
         logger.success(f"{env_file} was created and new credentials were added. Please restart the script after editing!")
         sys.exit(0)
+        
     else:
+
+        if os.path.exists(os.path.join(os.getcwd(),'db.json')):
+            logger.info(f'db.json already exists...')
+            try:
+                with open(os.path.join(os.getcwd(),'db.json'), 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    expired_date_str = data['expired-date']
+                    if expired_date_str:
+                        expired_date = datetime.fromisoformat(expired_date_str).astimezone(pytz.UTC)
+                        current_time = datetime.now(pytz.UTC)
+                        if current_time >= expired_date:
+                            logger.warning("The current time is equal to or later than the expired-date, need to update...")
+                        else:
+                            logger.info("Too early to update SSL, exiting updating process...")
+                            return
+                    else:
+                        logger.error(f'expired-date not found! The db.json need to re-create!')
+            except Exception as e:
+                logger.error(f'Error: {e}, the db.json need to re-create!')
 
         load_dotenv(env_file)
 
@@ -48,6 +70,7 @@ def updating_main_process():
 
             if not access_key_id or not access_key_secret or not endpoint or not domain or not record or not record_value or not key_path or not cert_id:
                 logger.error("Environment file is illegal, please check!")
+                sys.exit(0)
             else:
                 logger.info(f"AccessKey ID: {access_key_id}")
                 logger.info(f"AccessKey Secret: {access_key_secret}")
@@ -166,7 +189,7 @@ def updating_main_process():
 
                 time.sleep(1)
                 
-                logger.success('SSL Initial Complete!')
+                logger.success('SSL Updating Complete!')
 
         except Exception as e:
 
