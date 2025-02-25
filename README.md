@@ -14,20 +14,26 @@
  - [笔记：如何使用阿里云函数计算部署静态网页（如果只是更新证书可以不看）](https://www.bilibili.com/opus/1024609365265481753)
  - [笔记：给阿里云函数计算网站添加SSL证书（必看）](https://www.bilibili.com/opus/1029687408197632003)
 
-2. 通过poetry安装依赖：
+2. clone本项目并cd：
+```python
+git clone https://github.com/barryblueice/aliyun-fc-https.git
+cd aliyun-fc-https
+``` 
+
+3. 通过poetry安装依赖：
 
 ```bash
 poetry install
 ```
 
-3. 第一次运行后，编辑.env文件：
+4. 第一次运行后，编辑.env文件：
 
 ```bash
 poetry run python main.py
 vim ./.env
 ```
 
-4. 编辑完成后重新运行脚本，后续可自动续期：
+5. 编辑完成后重新运行脚本，后续可自动续期：
 
 ```bash
 poetry run python main.py
