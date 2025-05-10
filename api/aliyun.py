@@ -59,13 +59,21 @@ class Aliyun_Credential:
     @staticmethod
     def _20210406_create_client(
 
+        access_key_id: str,
+        access_key_secret: str,
         user_id: str,
         endpoint: str
 
     ) ->Alidns20210406Client:
-        credential = CredentialClient()
+        # credential = CredentialClient()
+        # config = open_api_models.Config(
+        #     credential=credential
+        # )
+        # config.endpoint = endpoint.replace('alidns',user_id,1).replace('aliyuncs.com','fc.aliyuncs.com',1)
+        # return Alidns20210406Client(config)
         config = open_api_models.Config(
-            credential=credential
+            access_key_id=access_key_id,
+            access_key_secret=access_key_secret
         )
         config.endpoint = endpoint.replace('alidns',user_id,1).replace('aliyuncs.com','fc.aliyuncs.com',1)
         return Alidns20210406Client(config)
@@ -238,29 +246,35 @@ class Aliyun_FC:
 
     @staticmethod
     def GetFCDomain(
-        
+
+        access_key_id: str,
+        access_key_secret: str,
         user_id: str,
         endpoint: str
 
     ) -> list:
         client = Aliyun_Credential._20210406_create_client(
-
+            
+            access_key_id=access_key_id,
+            access_key_secret=access_key_secret,
             user_id=user_id,
             endpoint=endpoint
         )
         list_custom_domains_headers = alidns_20210406_models.ListCustomDomainsHeaders()
         list_custom_domains_request = alidns_20210406_models.ListCustomDomainsRequest()
         runtime = util_models.RuntimeOptions()
-        try:
-            res = client.list_custom_domains_with_options(list_custom_domains_request, list_custom_domains_headers, runtime).to_map()
-            return res
-        except Exception as error:
-            logger.error(error.message)
-            logger.error(error.data.get("Recommend"))
-            UtilClient.assert_as_string(error.message)
+        # try:
+        res = client.list_custom_domains_with_options(list_custom_domains_request, list_custom_domains_headers, runtime).to_map()
+        return res
+        # except Exception as error:
+        #     logger.error(error.message)
+        #     logger.error(error.data.get("Recommend"))
+        #     UtilClient.assert_as_string(error.message)
 
     def UpdateFCCert(
-            
+        
+        access_key_id: str,
+        access_key_secret: str,
         user_id: str,
         endpoint: str,
         cert: str,
@@ -271,6 +285,8 @@ class Aliyun_FC:
     ) -> None:
         client = Aliyun_Credential._20210406_create_client(
 
+            access_key_id=access_key_id,
+            access_key_secret=access_key_secret,
             user_id=user_id,
             endpoint=endpoint
         )
@@ -284,9 +300,9 @@ class Aliyun_FC:
             cert_config=cert_config
         )
         runtime = util_models.RuntimeOptions()
-        try:
-            return (client.update_custom_domain_with_options(domain, update_custom_domain_request, update_custom_domain_headers, runtime).to_map())
-        except Exception as error:
-            logger.error(error.message)
-            logger.error(error.data.get("Recommend"))
-            UtilClient.assert_as_string(error.message)
+        # try:
+        return (client.update_custom_domain_with_options(domain, update_custom_domain_request, update_custom_domain_headers, runtime).to_map())
+        # except Exception as error:
+        #     logger.error(error.message)
+        #     logger.error(error.data.get("Recommend"))
+        #     UtilClient.assert_as_string(error.message)

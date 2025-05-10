@@ -198,7 +198,9 @@ def updating_main_process():
 
                 if fc_update == "1":
                     fc_domain_list = Aliyun_FC.GetFCDomain(
-
+                        
+                        access_key_id=access_key_id,
+                        access_key_secret=access_key_secret,
                         user_id=user_id,
                         endpoint=endpoint
 
@@ -218,6 +220,8 @@ def updating_main_process():
 
                     for i in fc_domain_list_target:
                         response = Aliyun_FC.UpdateFCCert(
+                            access_key_id=access_key_id,
+                            access_key_secret=access_key_secret,
                             user_id=user_id,
                             endpoint=endpoint,
                             cert=local_cert,
