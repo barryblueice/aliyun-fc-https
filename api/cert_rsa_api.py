@@ -31,7 +31,7 @@ def main_convert_main(
 ) -> str:
     try:
         key_path = os.path.join(key_path,'privkey.pem')
-        with open(key_path,'r') as f:
+        with open(key_path,'r', encoding="utf-8") as f:
             pkcs8_key = f.read()
         pkcs1_key = pkcs8_to_pkcs1(pkcs8_key)
         logger.success('''New key has been converted!''')

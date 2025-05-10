@@ -12,6 +12,8 @@ import pytz
 
 def updating_main_process():
 
+    _equal = True
+
     env_file = os.path.join(os.getcwd(),'.env')
 
     if not os.path.exists(env_file):
@@ -136,11 +138,9 @@ def updating_main_process():
 
                 time.sleep(1)
 
-                with open(os.path.join(key_path,'fullchain.pem'),'r') as f:
+                with open(os.path.join(key_path,'fullchain.pem'),'r', encoding="utf-8") as f:
                     local_cert = f.read()
                 local_rsa_key = cert_rsa_api.main_convert_main(key_path=key_path)
-
-                _equal = True
 
                 if SSL_info[0] == True:
                     online_cert = SSL_info[1]['body']["Cert"]
@@ -169,12 +169,12 @@ def updating_main_process():
                     _equal = False
                     ssl_name = domain.replace('.','-')
 
-                    with open(env_file, "r") as file:
+                    with open(env_file, "r", encoding="utf-8") as file:
                         lines = file.readlines()
 
                     filtered_lines = [line for line in lines if not line.startswith("Cert_Id")]
 
-                    with open(env_file, "w") as file:
+                    with open(env_file, "w", encoding="utf-8") as file:
                         file.writelines(filtered_lines)
 
                 if not _equal:
@@ -189,7 +189,7 @@ def updating_main_process():
 
                     CertId = res["body"]["CertId"]
 
-                    with open(env_file, "a") as file:
+                    with open(env_file, "a", encoding="utf-8") as file:
                         file.write(f"Cert_Id={CertId}")
 
                 time.sleep(1)

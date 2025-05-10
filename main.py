@@ -14,7 +14,7 @@ ascii_art = pyfiglet.figlet_format("Aliyun FC HTTPS")
 
 def get_expired_date():
     try:
-        with open("db.json", "r") as file:
+        with open("db.json", "r", encoding="utf-8") as file:
             data = json.load(file)
             expired_date_str = data.get("expired-date")
             if expired_date_str:
