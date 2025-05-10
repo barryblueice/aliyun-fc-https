@@ -6,7 +6,7 @@
 初衷是为了给部署在阿里云函数计算FC的轻量静态网页添加Let's Encrpypt免费证书，同时做一个脚本更新SSL。
 
 > [!CAUTION]
-> 脚本仅支持Linux系统。</br>脚本仅支持Python 3.9.2及以上版本。
+> 脚本仅支持Linux系统。</br>脚本仅支持Python 3.9.2及以上版本。</br>更新时间为证书到期的前一个月。
 
 # **如何部署**
 
@@ -44,8 +44,9 @@ poetry run python main.py
 ```bash
 AccessKey_ID=<accesskey_id>
 AccessKey_Secret=<accesskey_secret>
-Endpoint=alidns.cn-hangzhou.aliyuncs.com
+User_ID=
 
+Endpoint=alidns.cn-hangzhou.aliyuncs.com
 Domain=example.com
 Record=_acme-challenge
 Record_Value=<record_value>
@@ -53,12 +54,18 @@ Record_Value=<record_value>
 Key_Path=/etc/letsencrypt/live/example.com
 Cert_Id=00000000
 
+FC-Update=0
+
 # Endpoint 请参考 https://api.aliyun.com/product/Alidns
 ```
 
 ***
 
 AccessKey_ID和AccessKey_Secret需要去[阿里云Access Key](https://ram.console.aliyun.com/profile/access-keys)**创建云账号AccessKey**后获取。
+
+User_ID是你的阿里云账号ID，在阿里云官网右上角的用户信息中可以获取：![image](https://github.com/user-attachments/assets/9f0f04f5-f4c6-49d7-aa04-e695d4e03c3e)
+
+![image](https://github.com/user-attachments/assets/51f1238c-be85-450b-9764-ef63e1f16411)
 
 Endpoint根据你函数计算所使用的地域填写，比如我函数计算使用的是华东1杭州，那么Endpoint地址为alidns.cn-hangzhou.aliyuncs.com。[Endpoint参考可以看这里](https://api.aliyun.com/product/Alidns)。
 
@@ -88,6 +95,8 @@ Cert_Id从阿里云-数字证书管理服务控制台-SSL证书管理获取，�
 ![image](https://github.com/user-attachments/assets/3f20f4d0-bb03-4fc3-bd6d-30cb9fe655a7)
 
 ~~其实脚本默认有提供一个解析新增+SSL自动生成方案：</br>当没有检测到对应的TXT域名解析，以及符合要求的SSL证书后，脚本会自动添加一个TXT记录并自动添加SSL证书。</br>虽然这样会有点画蛇添足的意味，但是这些功能并没有删除。~~
+
+FC-Update为是否更新函数计算下的所有已绑定域名。默认为0，即不更新；若参数为1，则每次更新SSL证书后都会同步更新函数计算下的所有已绑定域名。
 
 # **持久化运行**：
 
