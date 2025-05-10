@@ -6,3 +6,4 @@ test.json
 db.json
 test.py
 **/__pycache__
+**/*.cn

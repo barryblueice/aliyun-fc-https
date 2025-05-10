@@ -22,13 +22,13 @@ def get_expired_date():
                 return expired_date
             else:
                 logger.error("expired-date not found in db.json")
-                sys.exit(1)
+                sys.exit(e)
     except FileNotFoundError as e:
         logger.error("db.json file not found")
-        sys.exit(e.errno)
+        sys.exit(e)
     except json.JSONDecodeError as e:
         logger.error("Error decoding JSON from db.json")
-        sys.exit(e.errno)
+        sys.exit(e)
 
 def calculate_future_date(expired_date):
     future_date = expired_date - timedelta(days=1)

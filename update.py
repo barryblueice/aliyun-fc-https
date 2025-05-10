@@ -26,7 +26,7 @@ def updating_main_process():
             f.write('\nKey_Path=\n')
             f.write('Cert_Id=\n')
             f.write('\nFC-Update=0')
-            f.write('\n# Endpoint 请参考 https://api.aliyun.com/product/Alidns\n\n')
+            f.write('\n\n# Endpoint 请参考 https://api.aliyun.com/product/Alidns\n\n')
         logger.success(f"{env_file} was created and new credentials were added. Please restart the script after editing!")
         sys.exit(0)
         
@@ -72,7 +72,7 @@ def updating_main_process():
 
         try:
 
-            if not access_key_id or not access_key_secret or not endpoint or not domain or not record or not record_value or not key_path or not cert_id:
+            if not access_key_id or not access_key_secret or not endpoint or not domain or not record or not record_value or not key_path or not cert_id or not fc_update or not user_id:
                 logger.error("Environment file is illegal, please check!")
                 sys.exit(0)
             else:
@@ -177,7 +177,6 @@ def updating_main_process():
                     with open(env_file, "w") as file:
                         file.writelines(filtered_lines)
 
-
                 if not _equal:
                     res = Aliyun_SSL.Upload_SSL(
                         access_key_id=access_key_id,
@@ -198,18 +197,38 @@ def updating_main_process():
                 logger.success('SSL Updating Complete!')
 
                 if fc_update == "1":
-                    fc_domain_list = Aliyun_FC.GetDomain(
+                    fc_domain_list = Aliyun_FC.GetFCDomain(
 
                         user_id=user_id,
                         endpoint=endpoint
 
                     )
 
-                    logger.info("These FC-Domains' SSL need to be updated:")
-                    for i in fc_domain_list:
-                        logger.info(i)
+                    fc_domain_list_target = []
+
+                    for i in fc_domain_list["body"]["customDomains"]:
+                        if str(i["domainName"]).endswith(domain):
+                            fc_domain_list_target.append(i["domainName"])
+
+                    logger_message = "\n\nThese FC-Domains' Certification need to be updated:\n"
+                    for i in fc_domain_list_target:
+                        logger_message += f'\n  - {i}'
+                    logger_message += '\n'
+                    logger.info(logger_message)
+
+                    for i in fc_domain_list_target:
+                        response = Aliyun_FC.UpdateFCCert(
+                            user_id=user_id,
+                            endpoint=endpoint,
+                            cert=local_cert,
+                            rsa=local_rsa_key,
+                            domain=i,
+                            cert_name=domain.replace('.','-')
+                        )
+                        if response["statusCode"] == 200:
+                            logger.success(f"Domain {i}'s Certification Updating Complete!")
 
         except Exception as e:
 
             logger.error(f'Error: {e}')
-            sys.exit(e.errno)
+            sys.exit(1)

@@ -38,7 +38,7 @@ def main_convert_main(
         return pkcs1_key
     except Exception as e:
         logger.error(f'Error: {e}')
-        sys.exit(e.errno)
+        sys.exit(1)
 
 def compare_detail(
     online_cert: str,
