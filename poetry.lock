@@ -286,6 +286,49 @@ url = "http://mirrors.aliyun.com/pypi/simple"
 reference = "mirrors"
 
 [[package]]
+name = "alibabacloud-fc-open20210406"
+version = "2.0.12"
+description = "Alibaba Cloud FC-Open (20210406) SDK Library for Python"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "alibabacloud_fc-open20210406-2.0.12.tar.gz", hash = "sha256:8b21b3d886ba4eef5f371e07d469c725932bb1ee6b9f567b2d515d32d1e747d9"},
+]
+
+[package.dependencies]
+alibabacloud_credentials = ">=0.3.6"
+alibabacloud_endpoint_util = ">=0.0.3,<1.0.0"
+alibabacloud_gateway_fc_util = ">=0.0.4,<1.0.0"
+alibabacloud_openapi_util = ">=0.2.1,<1.0.0"
+alibabacloud_tea_openapi = ">=0.3.8,<1.0.0"
+alibabacloud_tea_util = ">=0.3.11,<1.0.0"
+requests = ">=2.21.0,<3.0.0"
+
+[package.source]
+type = "legacy"
+url = "http://mirrors.aliyun.com/pypi/simple"
+reference = "mirrors"
+
+[[package]]
+name = "alibabacloud-gateway-fc-util"
+version = "0.0.5"
+description = "Alibaba Cloud FC Util Library for Python"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "alibabacloud_gateway_fc_util-0.0.5.tar.gz", hash = "sha256:686b64776179d08828f9a2ea802f88552c15d5761fb145bf7ad1aeb3bdb1ba58"},
+]
+
+[package.dependencies]
+alibabacloud_credentials = ">=0.3.6"
+requests = ">=2.21.0,<3.0.0"
+
+[package.source]
+type = "legacy"
+url = "http://mirrors.aliyun.com/pypi/simple"
+reference = "mirrors"
+
+[[package]]
 name = "alibabacloud-gateway-spi"
 version = "0.0.3"
 description = "Alibaba Cloud Gateway SPI SDK Library for Python"
@@ -1912,4 +1955,4 @@ reference = "mirrors"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9.2"
-content-hash = "2ff24603f1cf9fac096bf65101696adc5d81a0c739593e75621f0bf87faa784e"
+content-hash = "b0af13aff73e87ff00f496d0b3907e6070bf2b282d81fd1bd7d0f9607720c3bc"

@@ -7,16 +7,18 @@ from typing import List
 from loguru import logger
 
 from alibabacloud_alidns20150109.client import Client as Alidns20150109Client
-from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_alidns20150109 import models as alidns_20150109_models
-from alibabacloud_tea_util import models as util_models
-from alibabacloud_tea_util.client import Client as UtilClient
 
 from alibabacloud_cas20200407.client import Client as Alidns20200407Client
-from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_cas20200407 import models as alidns_20200407_models
+
+from alibabacloud_fc_open20210406.client import Client as Alidns20210406Client
+from alibabacloud_fc_open20210406 import models as alidns_20210406_models
+
+from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_tea_util import models as util_models
 from alibabacloud_tea_util.client import Client as UtilClient
+from alibabacloud_credentials.client import Client as CredentialClient
 
 class Aliyun_Credential:
     def __init__(self):
@@ -53,6 +55,21 @@ class Aliyun_Credential:
         )
         config.endpoint = endpoint
         return Alidns20200407Client(config)
+    
+    @staticmethod
+    def _20210406_create_client(
+
+        user_id: str,
+        endpoint: str
+
+    ) ->Alidns20210406Client:
+        credential = CredentialClient()
+        config = open_api_models.Config(
+            credential=credential
+        )
+        # Endpoint 请参考 https://api.aliyun.com/product/FC-Open
+        config.endpoint = endpoint.replace('alidns',user_id,1)
+        return Alidns20210406Client(config)
 
 class Aliyun_Domain:
 
@@ -215,3 +232,30 @@ class Aliyun_SSL:
             logger.error(error.data.get("Recommend"))
             UtilClient.assert_as_string(error.message)
             return [False,str(error.message)]
+
+class Aliyun_FC:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def GetDomain(
+        
+        user_id: str,
+        endpoint: str
+
+    ) -> list:
+        client = Aliyun_Credential._20210406_create_client(
+
+            user_id=user_id,
+            endpoint=endpoint
+        )
+        list_custom_domains_headers = alidns_20210406_models.ListCustomDomainsHeaders()
+        list_custom_domains_request = alidns_20210406_models.ListCustomDomainsRequest()
+        runtime = util_models.RuntimeOptions()
+        try:
+            res = client.list_custom_domains_with_options(list_custom_domains_request, list_custom_domains_headers, runtime)
+            return res
+        except Exception as error:
+            logger.error(error.message)
+            logger.error(error.data.get("Recommend"))
+            UtilClient.assert_as_string(error.message)

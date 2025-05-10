@@ -2,7 +2,7 @@ import os,sys
 import ujson as json
 from loguru import logger
 from dotenv import load_dotenv
-from api.aliyun import Aliyun_Credential,Aliyun_Domain,Aliyun_SSL
+from api.aliyun import Aliyun_Credential,Aliyun_Domain,Aliyun_SSL,Aliyun_FC
 from api import db,certbot,cert_rsa_api
 import time
 from datetime import datetime
@@ -18,12 +18,14 @@ def updating_main_process():
         with open(env_file, 'w',encoding='utf-8') as f:
             f.write('AccessKey_ID=\n')
             f.write('AccessKey_Secret=\n')
+            f.write('User_ID=\n')
             f.write('\nEndpoint=\n')
             f.write('Domain=\n')
             f.write('Record=\n')
             f.write('Record_Value=\n')
             f.write('\nKey_Path=\n')
             f.write('Cert_Id=\n')
+            f.write('\nFC-Update=0')
             f.write('\n# Endpoint 请参考 https://api.aliyun.com/product/Alidns\n\n')
         logger.success(f"{env_file} was created and new credentials were added. Please restart the script after editing!")
         sys.exit(0)
@@ -53,12 +55,14 @@ def updating_main_process():
 
         access_key_id = os.getenv('AccessKey_ID')
         access_key_secret = os.getenv('AccessKey_Secret')
+        user_id = os.getenv('User_ID')
         endpoint = os.getenv('Endpoint')
         domain =  os.getenv('Domain')
         record = os.getenv('Record')
         record_value = os.getenv('Record_Value')
         key_path = os.getenv('Key_Path')
         cert_id = os.getenv('Cert_Id')
+        fc_update = os.getenv('FC-Update')
 
         time.sleep(1)
 
@@ -74,12 +78,14 @@ def updating_main_process():
             else:
                 logger.info(f"AccessKey ID: {access_key_id}")
                 logger.info(f"AccessKey Secret: {access_key_secret}")
+                logger.info(f"User ID: {user_id}")
                 logger.info(f"Endpoint: {endpoint}")
                 logger.info(f"Domain: {domain}")
                 logger.info(f"Record: {record}")
                 logger.info(f"Record Value: {record_value}")
                 logger.info(f"Key Path: {key_path}")
                 logger.info(f"Cert ID: {cert_id}")
+                logger.info(f"FC-Updating? : {fc_update}")
 
                 time.sleep(1)
 
@@ -190,6 +196,18 @@ def updating_main_process():
                 time.sleep(1)
                 
                 logger.success('SSL Updating Complete!')
+
+                if fc_update == "1":
+                    fc_domain_list = Aliyun_FC.GetDomain(
+
+                        user_id=user_id,
+                        endpoint=endpoint
+
+                    )
+
+                    logger.info("These FC-Domains' SSL need to be updated:")
+                    for i in fc_domain_list:
+                        logger.info(i)
 
         except Exception as e:
 
