@@ -4,6 +4,7 @@ import ujson as json
 from loguru import logger
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from dateutil.relativedelta import relativedelta
 
 def update_expire_date(keypath: str):
 
@@ -15,6 +16,8 @@ def update_expire_date(keypath: str):
 
 
         expiration_date = cert.not_valid_after_utc
+        
+        expiration_date -= relativedelta(months=1)
 
         # logger.info(f"Expired Date: {expiration_date}")
 
