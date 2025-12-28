@@ -109,10 +109,11 @@ class Aliyun_Domain:
             res = client.describe_domain_records_with_options(describe_domain_records_request, runtime).to_map()
             return res
         except Exception as error:
-            logger.error(error.message)
-            logger.error(error.data.get("Recommend"))
+            logger.error(f"Aliyun API Error: {error.message}")
+            if hasattr(error, 'data') and error.data:
+                logger.error(error.data.get("Recommend"))
             UtilClient.assert_as_string(error.message)
-            sys.exit(error.errno)
+            sys.exit(error.errno if hasattr(error, 'errno') else 1)
 
     @staticmethod
     def new_record(
@@ -141,10 +142,72 @@ class Aliyun_Domain:
             client.add_domain_record_with_options(add_domain_record_request, runtime)
             logger.success('Record has been successfully initiated')
         except Exception as error:
-            logger.error(error.message)
-            logger.error(error.data.get("Recommend"))
+            logger.error(f"Aliyun API Error: {error.message}")
+            if hasattr(error, 'data') and error.data:
+                logger.error(error.data.get("Recommend"))
             UtilClient.assert_as_string(error.message)
-            sys.exit(error.errno)
+            sys.exit(error.errno if hasattr(error, 'errno') else 1)
+
+    @staticmethod
+    def update_record(
+        
+        access_key_id: str,
+        access_key_secret: str,
+        endpoint: str,
+        record_id: str,
+        record: str,
+        record_value: str
+
+    ) -> None:
+        client = Aliyun_Credential._20150109_create_client(
+            access_key_id=access_key_id,
+            access_key_secret=access_key_secret,
+            endpoint=endpoint
+        )
+        update_domain_record_request = alidns_20150109_models.UpdateDomainRecordRequest(
+            record_id = record_id,
+            rr = record,
+            type = 'TXT',
+            value = record_value
+        )
+        runtime = util_models.RuntimeOptions()
+        try:
+            client.update_domain_record_with_options(update_domain_record_request, runtime)
+            logger.success('Record has been successfully updated')
+        except Exception as error:
+            logger.error(f"Aliyun API Error: {error.message}")
+            if hasattr(error, 'data') and error.data:
+                logger.error(error.data.get("Recommend"))
+            UtilClient.assert_as_string(error.message)
+            sys.exit(error.errno if hasattr(error, 'errno') else 1)
+
+    @staticmethod
+    def delete_record(
+        
+        access_key_id: str,
+        access_key_secret: str,
+        endpoint: str,
+        record_id: str
+
+    ) -> None:
+        client = Aliyun_Credential._20150109_create_client(
+            access_key_id=access_key_id,
+            access_key_secret=access_key_secret,
+            endpoint=endpoint
+        )
+        delete_domain_record_request = alidns_20150109_models.DeleteDomainRecordRequest(
+            record_id = record_id
+        )
+        runtime = util_models.RuntimeOptions()
+        try:
+            client.delete_domain_record_with_options(delete_domain_record_request, runtime)
+            logger.success('Record has been successfully deleted')
+        except Exception as error:
+            logger.error(f"Aliyun API Error: {error.message}")
+            if hasattr(error, 'data') and error.data:
+                logger.error(error.data.get("Recommend"))
+            UtilClient.assert_as_string(error.message)
+            sys.exit(error.errno if hasattr(error, 'errno') else 1)
 
 class Aliyun_SSL:
 
@@ -263,6 +326,9 @@ class Aliyun_FC:
         list_custom_domains_headers = alidns_20210406_models.ListCustomDomainsHeaders()
         list_custom_domains_request = alidns_20210406_models.ListCustomDomainsRequest()
         runtime = util_models.RuntimeOptions()
+        # 设置更长的超时时间（30秒）
+        runtime.read_timeout = 30000  # 毫秒
+        runtime.connect_timeout = 10000  # 毫秒
         # try:
         res = client.list_custom_domains_with_options(list_custom_domains_request, list_custom_domains_headers, runtime).to_map()
         return res
@@ -300,6 +366,9 @@ class Aliyun_FC:
             cert_config=cert_config
         )
         runtime = util_models.RuntimeOptions()
+        # 设置更长的超时时间（30秒）
+        runtime.read_timeout = 30000  # 毫秒
+        runtime.connect_timeout = 10000  # 毫秒
         # try:
         return (client.update_custom_domain_with_options(domain, update_custom_domain_request, update_custom_domain_headers, runtime).to_map())
         # except Exception as error:

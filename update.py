@@ -74,7 +74,8 @@ def updating_main_process():
 
         try:
 
-            if not access_key_id or not access_key_secret or not endpoint or not domain or not record or not record_value or not key_path or not cert_id or not fc_update or not user_id:
+            # Record_Value 不再必需，hook 脚本会自动处理
+            if not access_key_id or not access_key_secret or not endpoint or not domain or not record or not key_path or not cert_id or not fc_update or not user_id:
                 logger.error("Environment file is illegal, please check!")
                 sys.exit(0)
             else:
@@ -84,10 +85,20 @@ def updating_main_process():
                 logger.info(f"Endpoint: {endpoint}")
                 logger.info(f"Domain: {domain}")
                 logger.info(f"Record: {record}")
-                logger.info(f"Record Value: {record_value}")
+                if record_value:
+                    logger.info(f"Record Value: {record_value} (hook 脚本会自动更新)")
                 logger.info(f"Key Path: {key_path}")
                 logger.info(f"Cert ID: {cert_id}")
                 logger.info(f"FC-Updating? : {fc_update}")
+
+                # 自动修正 Key_Path：如果配置的路径不存在，尝试使用基于域名的标准路径
+                if not os.path.exists(os.path.join(key_path, 'fullchain.pem')):
+                    standard_path = f"/etc/letsencrypt/live/{domain}"
+                    if os.path.exists(os.path.join(standard_path, 'fullchain.pem')):
+                        logger.warning(f"Configured Key_Path '{key_path}' invalid. Found certs at '{standard_path}'. Using it.")
+                        key_path = standard_path
+                    else:
+                        logger.warning(f"Certificate not found at {key_path} or {standard_path}. Certbot might generate it later.")
 
                 time.sleep(1)
 
@@ -106,22 +117,36 @@ def updating_main_process():
                             record_check = True
                             break
 
+                # 注意：DNS 记录现在由 certbot hook 脚本自动创建/更新
+                # 这里只做检查，不预先创建
                 if record_check == False:
-                    logger.warning("Record Not Found, Updating……")
-                    domain_list = Aliyun_Domain.new_record(
-                        access_key_id = access_key_id,
-                        access_key_secret = access_key_secret,
-                        endpoint = endpoint,
-                        domain_name = domain,
-                        record = record,
-                        record_value = record_value
-                        )
+                    logger.info("DNS record not found, will be created automatically by certbot hook")
                     
-                logger.info("Updating SSL by CertBot")
+                logger.info("Updating SSL by CertBot (fully automated)")
 
                 time.sleep(1)
 
-                certbot.certbot_update(domain=domain)
+                # 添加重试机制
+                max_retries = 3
+                last_error = None
+                for attempt in range(max_retries):
+                    try:
+                        certbot.certbot_update(domain=domain)
+                        break  # 成功则退出循环
+                    except Exception as e:
+                        last_error = e
+                        if attempt < max_retries - 1:
+                            logger.warning(f"Certbot update failed (attempt {attempt + 1}/{max_retries}): {e}")
+                            logger.info("Retrying in 10 seconds...")
+                            time.sleep(10)
+                        else:
+                            logger.error(f"Certbot update failed after {max_retries} attempts")
+                            logger.error(f"Last error details: {last_error}")
+                            # 输出完整的错误信息，包括 traceback
+                            import traceback
+                            logger.error(f"Full traceback:\n{traceback.format_exc()}")
+                            raise e  # 最后一次失败则抛出异常
+
                 db.update_expire_date(keypath=key_path)
 
                 with open(os.path.join(os.getcwd(),"db.json"),"r",encoding='utf-8') as f:
@@ -133,7 +158,7 @@ def updating_main_process():
                 SSL_info = Aliyun_SSL.Get_SSL(
                     access_key_id = access_key_id,
                     access_key_secret = access_key_secret,
-                    cert_id=int(cert_id)
+                    cert_id=str(cert_id)
                 )
 
                 time.sleep(1)
@@ -164,7 +189,7 @@ def updating_main_process():
                     Aliyun_SSL.Delete_SSL(
                         access_key_id=access_key_id,
                         access_key_secret=access_key_secret,
-                        cert_id=cert_id
+                        cert_id=str(cert_id)
                     )
                     _equal = False
                     ssl_name = domain.replace('.','-')
@@ -184,7 +209,7 @@ def updating_main_process():
                         cert=local_cert,
                         key=local_rsa_key,
                         name=ssl_name,
-                        cert_id=int(cert_id)
+                        cert_id=str(cert_id)
                     )
 
                     CertId = res["body"]["CertId"]
@@ -219,18 +244,25 @@ def updating_main_process():
                     logger.info(logger_message)
 
                     for i in fc_domain_list_target:
-                        response = Aliyun_FC.UpdateFCCert(
-                            access_key_id=access_key_id,
-                            access_key_secret=access_key_secret,
-                            user_id=user_id,
-                            endpoint=endpoint,
-                            cert=local_cert,
-                            rsa=local_rsa_key,
-                            domain=i,
-                            cert_name=domain.replace('.','-')
-                        )
-                        if response["statusCode"] == 200:
-                            logger.success(f"Domain {i}'s Certification Updating Complete!")
+                        try:
+                            response = Aliyun_FC.UpdateFCCert(
+                                access_key_id=access_key_id,
+                                access_key_secret=access_key_secret,
+                                user_id=user_id,
+                                endpoint=endpoint,
+                                cert=local_cert,
+                                rsa=local_rsa_key,
+                                domain=i,
+                                cert_name=domain.replace('.','-')
+                            )
+                            if response.get("statusCode") == 200:
+                                logger.success(f"Domain {i}'s Certification Updating Complete!")
+                            else:
+                                logger.error(f"Domain {i} Update Failed: {response}")
+                        except Exception as e:
+                            logger.error(f"Failed to update domain {i}: {e}")
+                            # 继续处理下一个域名，不要退出
+                            continue
 
         except Exception as e:
 
