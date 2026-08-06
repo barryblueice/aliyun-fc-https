@@ -1,47 +1,67 @@
 # **Aliyun FC Https**
 
 ~~基于certbot的阿里云函数计算https自动续期脚本。~~</br>
-基于certbot的阿里云https自动续期脚本，可用于函数计算、异地主机域名SSL等服务。
+~~基于certbot的阿里云https自动续期脚本，可用于函数计算、异地主机域名SSL等服务。~~</br>
+基于ACME的阿里云https自动续期脚本，可用于函数计算、异地主机域名SSL等服务。
 
 初衷是为了给部署在阿里云函数计算FC的轻量静态网页添加Let's Encrpypt免费证书，同时做一个脚本更新SSL。
 
 > [!CAUTION]
-> 脚本仅支持Linux系统。</br>脚本仅支持Python 3.9.2及以上版本。</br>更新时间为证书到期的前一个月。
+> 脚本仅支持Python 3.9.2及以上版本。
+>
+> ## 工作流程
+
+1. 直接连接配置的ACME Directory创建订单。
+2. 通过AliDNS API创建或更新`_acme-challenge` TXT记录。
+3. 完成DNS-01验证并保存证书、私钥和ACME账户密钥。
+4. 上传新证书到阿里云数字证书管理服务。
+5. `FC-Update=1` 时更新匹配的函数计算自定义域名。
+6. 删除临时TXT记录；若原来已有同名TXT记录，则恢复原值。
+
 
 # **如何部署**
 
-1. 根据这两篇教程部署网站+SSL证书：
- - [笔记：如何使用阿里云函数计算部署静态网页（如果只是更新证书可以不看）](https://www.bilibili.com/opus/1024609365265481753)
- - [笔记：给阿里云函数计算网站添加SSL证书（必看）](https://www.bilibili.com/opus/1029687408197632003)
-
-2. clone本项目并cd：
+1. clone本项目并cd：
 ```python
 git clone https://github.com/barryblueice/aliyun-fc-https.git
 cd aliyun-fc-https
-``` 
+```
 
-3. 通过poetry安装依赖：
+2. 通过poetry安装依赖：
 
 ```bash
 poetry install
 ```
 
-4. 第一次运行后，编辑.env文件：
-
-```bash
-poetry run python main.py
-vim ./.env
-```
-
-5. 编辑完成后重新运行脚本，后续可自动续期：
+3. 第一次运行后，编辑.env文件：
 
 ```bash
 poetry run python main.py
 ```
 
-### .env文件范例如下：
+4. 填写 `.env` 后，再执行一次即可签发和部署首张证书：
 
 ```bash
+poetry run python main.py --once
+```
+
+5. 常驻运行时，程序启动后会立即检查，之后每 12 小时检查一次：
+
+```bash
+poetry run python main.py
+```
+
+6. 忽略续期窗口并立即重签一次：
+
+```bash
+poetry run python main.py --once --force
+```
+
+强制续期会向CA创建新订单，请避免频繁使用，以免触发CA的频率限制。
+
+## 配置
+
+```dotenv
 AccessKey_ID=<accesskey_id>
 AccessKey_Secret=<accesskey_secret>
 User_ID=
@@ -49,15 +69,31 @@ User_ID=
 Endpoint=alidns.cn-hangzhou.aliyuncs.com
 Domain=example.com
 Record=_acme-challenge
-Record_Value=<record_value>
 
-Key_Path=/etc/letsencrypt/live/example.com
-Cert_Id=00000000
+Key_Path=./certs/example.com
+ACME_Email=admin@example.com
+ACME_Directory_URL=https://acme-v02.api.letsencrypt.org/directory
+DNS_Propagation_Seconds=30
+RSA_Key_Size=2048
+Renew_Before_Days=30
 
+Cert_Id=
 FC-Update=0
-
-# Endpoint 请参考 https://api.aliyun.com/product/Alidns
 ```
+
+- `AccessKey_ID` / `AccessKey_Secret`：用于AliDNS、数字证书管理服务以及可选的FC更新。建议使用权限最小化的RAM用户。
+- `User_ID`：阿里云账号ID。
+- `Endpoint`：AliDNS地域Endpoint，默认为`alidns.cn-hangzhou.aliyuncs.com`。
+- `Domain`：根域名，不要填写`*.`；当前签发的证书只包含`*.Domain`，不包含根域名本身。
+- `Record`：DNS-01 使用的相对记录名，通常保持`_acme-challenge`。
+- `Key_Path`：证书保存目录。相对路径以项目根目录为基准，Windows和Unix路径均可。
+- `ACME_Email`：ACME 账户联系邮箱；留空时使用 `admin@Domain`。
+- `ACME_Directory_URL`：自定义ACME Directory地址，默认为Let’s Encrypt，并兼容其他ACME v2 / RFC 8555证书服务商。
+- `DNS_Propagation_Seconds`：提交验证前等待DNS生效的秒数。如果解析生效较慢，可适当增大。
+- `RSA_Key_Size`：RSA 私钥位数，最小为2048。
+- `Renew_Before_Days`：距到期多少天时开始续期。
+- `Cert_Id`：已有阿里云证书ID。首次使用可以留空，上传成功后程序会自动回填。
+- `FC-Update`：设为 `1` 时，同步更新当前账号下由通配符证书覆盖的一级子域名；根域名和多级子域名不会被误更新。
 
 ***
 
@@ -70,33 +106,6 @@ User_ID是你的阿里云账号ID，在阿里云官网右上角的用户信息�
 Endpoint根据你函数计算所使用的地域填写，比如我函数计算使用的是华东1杭州，那么Endpoint地址为alidns.cn-hangzhou.aliyuncs.com。[Endpoint参考可以看这里](https://api.aliyun.com/product/Alidns)。
 
 Record和Record_Value是在certbot初始化配置阶段仅出现一次的参数：
-
-```bash
-Please deploy a DNS TXT record under the name:
-
-_acme-challenge.example.com # 这里需要设置域名解析，需要到域名后台填写信息（Record）
-
-with the following value:
-
-xxxxxxxxxxxxxxxxxxx # 这里是域名解析的内容（Record_Value）
-```
-
-***
-
-Key_path为SSL证书的保存目录，默认为/etc/letsencrypt/live。
-
-> [!CAUTION]
-> 如果使用certbot默认的保存目录，则脚本需要在root环境下运行。
-
-***
-
-Cert_Id从阿里云-数字证书管理服务控制台-SSL证书管理获取，你原本上传的证书下CertIdentifier开头那8位数字就是：
-
-![image](https://github.com/user-attachments/assets/3f20f4d0-bb03-4fc3-bd6d-30cb9fe655a7)
-
-~~其实脚本默认有提供一个解析新增+SSL自动生成方案：</br>当没有检测到对应的TXT域名解析，以及符合要求的SSL证书后，脚本会自动添加一个TXT记录并自动添加SSL证书。</br>虽然这样会有点画蛇添足的意味，但是这些功能并没有删除。~~
-
-FC-Update为是否更新函数计算下的所有已绑定域名。默认为0，即不更新；若参数为1，则每次更新SSL证书后都会同步更新函数计算下的所有已绑定域名。
 
 # **持久化运行**：
 
