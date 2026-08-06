@@ -212,6 +212,15 @@ def _covered_by_wildcard(hostname: str, domain: str) -> bool:
     return bool(label) and "." not in label
 
 
+def _supports_https(protocol: str) -> bool:
+    protocols = {
+        item.strip().upper()
+        for item in str(protocol).replace("/", ",").split(",")
+        if item.strip()
+    }
+    return "HTTPS" in protocols
+
+
 def _update_fc_domains(config: Config, certificate: str, private_key: str) -> None:
     if not config.fc_update:
         return
@@ -222,14 +231,27 @@ def _update_fc_domains(config: Config, certificate: str, private_key: str) -> No
         user_id=config.user_id,
         endpoint=config.endpoint,
     )
-    domains = [
-        item["domainName"]
-        for item in response.get("body", {}).get("customDomains", [])
-        if _covered_by_wildcard(item.get("domainName", ""), config.domain)
-    ]
-    logger.info(f"Updating {len(domains)} Function Compute custom domain(s)")
+    targets: list[tuple[str, str]] = []
+    skipped_http_domains: list[str] = []
+    for item in response.get("body", {}).get("customDomains", []):
+        domain_name = item.get("domainName", "")
+        if not _covered_by_wildcard(domain_name, config.domain):
+            continue
 
-    for domain in domains:
+        protocol = str(item.get("protocol", "")).strip().upper()
+        if not _supports_https(protocol):
+            skipped_http_domains.append(domain_name)
+            continue
+        targets.append((domain_name, protocol))
+
+    if skipped_http_domains:
+        logger.info(
+            "Skipping HTTP-only FC custom domain(s): "
+            + ", ".join(skipped_http_domains)
+        )
+    logger.info(f"Updating {len(targets)} HTTPS Function Compute custom domain(s)")
+
+    for domain, protocol in targets:
         result = Aliyun_FC.UpdateFCCert(
             access_key_id=config.access_key_id,
             access_key_secret=config.access_key_secret,
@@ -239,6 +261,7 @@ def _update_fc_domains(config: Config, certificate: str, private_key: str) -> No
             rsa=private_key,
             domain=domain,
             cert_name=config.domain.replace(".", "-"),
+            protocol=protocol,
         )
         if result.get("statusCode") != 200:
             raise RuntimeError(f"Failed to update FC domain {domain}: {result}")

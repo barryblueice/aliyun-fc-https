@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import ANY, patch
 
 from cryptography import x509
@@ -12,7 +13,7 @@ from api.acme_client import (
     _load_or_create_rsa_key,
     issue_wildcard_certificate,
 )
-from update import _covered_by_wildcard
+from update import _covered_by_wildcard, _supports_https, _update_fc_domains
 
 
 class KeyAndCsrTests(unittest.TestCase):
@@ -21,6 +22,13 @@ class KeyAndCsrTests(unittest.TestCase):
         self.assertFalse(_covered_by_wildcard("example.com", "example.com"))
         self.assertFalse(_covered_by_wildcard("a.b.example.com", "example.com"))
         self.assertFalse(_covered_by_wildcard("notexample.com", "example.com"))
+
+    def test_https_protocol_detection(self) -> None:
+        self.assertTrue(_supports_https("HTTPS"))
+        self.assertTrue(_supports_https("HTTP,HTTPS"))
+        self.assertTrue(_supports_https("HTTP/HTTPS"))
+        self.assertFalse(_supports_https("HTTP"))
+        self.assertFalse(_supports_https(""))
 
     def test_account_key_is_reused_and_csr_contains_wildcard(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -121,6 +129,46 @@ class AliDnsChallengeTests(unittest.TestCase):
             endpoint="alidns.example.test",
             record_id="record-2",
         )
+
+
+class FunctionComputeTests(unittest.TestCase):
+    @patch("update.Aliyun_FC.UpdateFCCert")
+    @patch("update.Aliyun_FC.GetFCDomain")
+    def test_only_https_domains_are_updated_with_protocol(
+        self,
+        get_domains,
+        update_certificate,
+    ) -> None:
+        get_domains.return_value = {
+            "body": {
+                "customDomains": [
+                    {"domainName": "http.example.com", "protocol": "HTTP"},
+                    {"domainName": "https.example.com", "protocol": "HTTPS"},
+                    {
+                        "domainName": "both.example.com",
+                        "protocol": "HTTP,HTTPS",
+                    },
+                    {"domainName": "a.b.example.com", "protocol": "HTTPS"},
+                ]
+            }
+        }
+        update_certificate.return_value = {"statusCode": 200}
+        config = SimpleNamespace(
+            fc_update=True,
+            access_key_id="id",
+            access_key_secret="secret",
+            user_id="account",
+            endpoint="alidns.cn-hangzhou.aliyuncs.com",
+            domain="example.com",
+        )
+
+        _update_fc_domains(config, "certificate", "private-key")
+
+        self.assertEqual(update_certificate.call_count, 2)
+        calls = {call.kwargs["domain"]: call.kwargs for call in update_certificate.call_args_list}
+        self.assertEqual(calls["https.example.com"]["protocol"], "HTTPS")
+        self.assertEqual(calls["both.example.com"]["protocol"], "HTTP,HTTPS")
+        self.assertNotIn("http.example.com", calls)
 
 
 if __name__ == "__main__":

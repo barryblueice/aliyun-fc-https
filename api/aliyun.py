@@ -353,7 +353,8 @@ class Aliyun_FC:
         cert: str,
         rsa: str,
         domain: str,
-        cert_name: str
+        cert_name: str,
+        protocol: str
 
     ) -> None:
         client = Aliyun_Credential._20210406_create_client(
@@ -370,6 +371,7 @@ class Aliyun_FC:
             private_key=rsa
         )
         update_custom_domain_request = alidns_20210406_models.UpdateCustomDomainRequest(
+            protocol=protocol,
             cert_config=cert_config
         )
         runtime = util_models.RuntimeOptions()
