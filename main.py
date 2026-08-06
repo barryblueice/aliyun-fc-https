@@ -1,65 +1,61 @@
-import json
-import subprocess
-from datetime import datetime, timedelta
+"""Aliyun FC HTTPS certificate renewal daemon and one-shot command."""
+
+import argparse
 import time
-import schedule
-import sys
+
 import pyfiglet
+import schedule
 from loguru import logger
-from update import updating_main_process
 
-# This python script needs superuser(root) permission to run!
+from update import ConfigurationRequired, updating_main_process
 
-ascii_art = pyfiglet.figlet_format("Aliyun FC HTTPS")
 
-def get_expired_date():
+def _run_scheduled_update() -> None:
     try:
-        with open("db.json", "r", encoding="utf-8") as file:
-            data = json.load(file)
-            expired_date_str = data.get("expired-date")
-            if expired_date_str:
-                expired_date = datetime.fromisoformat(expired_date_str)
-                return expired_date
-            else:
-                logger.error("expired-date not found in db.json")
-                sys.exit(e)
-    except FileNotFoundError as e:
-        logger.error("db.json file not found")
-        sys.exit(e)
-    except json.JSONDecodeError as e:
-        logger.error("Error decoding JSON from db.json")
-        sys.exit(e)
-
-def calculate_future_date(expired_date):
-    future_date = expired_date - timedelta(days=1)
-    return future_date
-
-def schedule_next_run(future_date):
-    def job():
         updating_main_process()
+    except Exception:
+        logger.exception("Scheduled certificate check failed")
 
-    schedule_time = future_date.strftime("%Y-%m-%d %H:%M:%S")
-    logger.info(f"Next update will be scheduled at: {schedule_time}")
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Issue and deploy an ACME wildcard certificate through AliDNS"
+    )
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="check once and exit instead of running as a daemon",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="ignore the renewal window for this run",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = _parse_args()
+    logger.info("Project: https://github.com/barryblueice/aliyun-fc-https")
+    logger.info(f"\n{pyfiglet.figlet_format('Aliyun FC HTTPS')}")
+
+    try:
+        updating_main_process(force=args.force)
+    except ConfigurationRequired:
+        return 0
+    except Exception:
+        logger.exception("Certificate update failed")
+        return 1
+
+    if args.once:
+        return 0
+
+    schedule.every(12).hours.do(_run_scheduled_update)
+    logger.info("Daemon started; certificates will be checked every 12 hours")
     while True:
         schedule.run_pending()
         time.sleep(1)
 
-def main():
-    
-    updating_main_process()
-
-    expired_date = get_expired_date()
-    if expired_date:
-        future_date = calculate_future_date(expired_date)
-        schedule_next_run(future_date)
 
 if __name__ == "__main__":
-    logger.info("Project: https://github.com/barryblueice/aliyun-fc-https")
-    logger.info("Powered by barryblueice.")
-    logger.info(f'''
-
-{ascii_art}
-''')
-    time.sleep(1)
-    main()
+    raise SystemExit(main())

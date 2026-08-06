@@ -93,7 +93,8 @@ class Aliyun_Domain:
         access_key_id: str,
         access_key_secret: str,
         endpoint: str,
-        domain_name: str
+        domain_name: str,
+        record: str = None
 
     ) -> None:
         client = Aliyun_Credential._20150109_create_client(
@@ -102,7 +103,10 @@ class Aliyun_Domain:
             endpoint=endpoint
         )
         describe_domain_records_request = alidns_20150109_models.DescribeDomainRecordsRequest(
-            domain_name = domain_name
+            domain_name=domain_name,
+            rrkey_word=record,
+            type_key_word='TXT' if record else None,
+            page_size=500
         )
         runtime = util_models.RuntimeOptions()
         try:
@@ -139,8 +143,11 @@ class Aliyun_Domain:
         )
         runtime = util_models.RuntimeOptions()
         try:
-            client.add_domain_record_with_options(add_domain_record_request, runtime)
+            res = client.add_domain_record_with_options(
+                add_domain_record_request, runtime
+            ).to_map()
             logger.success('Record has been successfully initiated')
+            return res
         except Exception as error:
             logger.error(f"Aliyun API Error: {error.message}")
             if hasattr(error, 'data') and error.data:
