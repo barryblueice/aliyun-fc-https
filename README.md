@@ -106,8 +106,6 @@ User_ID是你的阿里云账号ID，在阿里云官网右上角的用户信息�
 
 Endpoint根据你函数计算所使用的地域填写，比如我函数计算使用的是华东1杭州，那么Endpoint地址为alidns.cn-hangzhou.aliyuncs.com。[Endpoint参考可以看这里](https://api.aliyun.com/product/Alidns)。
 
-Record和Record_Value是在certbot初始化配置阶段仅出现一次的参数：
-
 # **持久化运行**：
 
 可以使用[MCSManager](https://github.com/MCSManager/MCSManager)、[1Panel](https://1panel.cn/)、[宝塔面板](https://www.bt.cn/new/index.html)这类WebUI管理工具进行持久化运行，也可通过nohup、screen等Linux命令行工具设置后台运行。
